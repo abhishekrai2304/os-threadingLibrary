@@ -6,15 +6,17 @@ int val1 = 0;
 static int num_thread = 0;
 static thread_t th[5];
 spinLock l1;
+mutexLock ml1;
 void func(void *arg)
 {
-  thread_spinLock(&l1);
+  thread_mutexLock(&ml1);
   for (int i = 0; i < 5; i++)
   {
     printf("%d\n", i);
   
   }
-  thread_spinUnlock(&l1);
+  //thread_spinUnlock(&l1);
+  thread_mutexUnlock(&ml1);
 
 }
 int thread_create(mthread *th, void *func, int argc, char **argv)
@@ -115,7 +117,23 @@ int thread_spinUnlock(spinLock *lock){
   lock->val = 0;
   return 0;
 }
-
+int mutexLockValue(mutexLock *lock){
+  if(lock->val == 0)
+    return 0;
+  else 
+    //sleep(2);
+  return 1;
+}
+int thread_mutexLock(mutexLock *lock){
+  while(mutexLockValue(lock) != 0)
+    sleep(2);
+  lock->val = 1;
+  return 0;
+}
+int thread_mutexUnlock(mutexLock *lock){
+  lock->val = 0;
+  return 0;
+}
 int main(int argc, char **argv)
 {
   int v;

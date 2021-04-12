@@ -1,0 +1,15 @@
+*****Many to One model*****
+1)how to store & restore context.->setjmp, longjmp. Both are asynchoronous.
+	a)setjmp:- To remember particular location in the code.
+	b)longjmp:- jump to particular location in the code. 
+setjmp & longjmp are more complicated, use the below functions instead, they make the life easy.
+setcontext()
+getcontext()
+swapcontext()
+makecontext()
+
+2)how to do scheduling?
+	learn SIGALRM handling for timer and scheduler & timer_create & timer_stop system calls.
+3)
+
+sigaction is more powerful than signal

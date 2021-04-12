@@ -24,6 +24,11 @@ typedef struct spinLock{
     int val;
 }spinLock;
 
+typedef struct mutexLock{
+    int val;
+}mutexLock;
+
+
 void func(void* arg);
 int thread_create(mthread *t, void *func, int argc, char** argv);
 // int thread_join(thread_t *t, void **retval);
@@ -32,3 +37,6 @@ void thread_kill(mthread t,  int sig);
 int thread_spinLock(spinLock *lock);
 int thread_spinUnlock(spinLock *lock);
 int lockValue(spinLock *lock);
+int thread_mutexLock(mutexLock *lock);
+int thread_mutexUnlock(mutexLock *lock);
+int mutexLockValue(mutexLock *lock);
