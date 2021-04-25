@@ -1,4 +1,5 @@
 #include "oto.h"
+
 static pid_t parent_pid;
 int done = 0;
 pid_t parent;
@@ -7,6 +8,10 @@ static int num_thread = 0;
 static thread_t th[5];
 spinLock l1;
 mutexLock ml1;
+
+ inline int tgkill(int tgid, int tid, int sig) {
+    return syscall(SYS_tgkill, tgid, tid, sig);
+}
 void func(void *arg)
 {
   thread_mutexLock(&ml1);
@@ -91,12 +96,17 @@ int thread_join(mthread *th){				//function join
 	return 0;
 }
 
-void thread_kill(mthread t,  int sig){
+int thread_kill(mthread t,  int sig){
   if(sig == 0){
         //printf("kill success");
+        return 0;
   }
   pid_t tgid = getpid();
-  int i = tgkill(tgid, t, sig);
+  int err = tgkill(tgid, t, sig);
+  if(err == -1){
+    return errno;
+  }
+  return 0;
 }
 int lockValue(spinLock *lock){
   if(lock->val == 0)
