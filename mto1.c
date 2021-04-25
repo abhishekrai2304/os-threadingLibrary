@@ -1,8 +1,10 @@
-#include "mto2.h"
-static int cur_exe_thread = 0;          
+#include "mto1.h"
+static int cur_exe_thread = 0;  
+static threadm t_list[MAX_THREAD];         
 
 static int num_active_thread = 0;         
-static int within_thread = 0;			
+static int within_thread = 0;	
+static ucontext_t ctext;		
 
 
 ucontext_t maincontext;
@@ -54,18 +56,17 @@ void init_t (long period) {
 	current = &main_t; 
 
 }
-//void thread_init(){				
+void init(){				
 
-//	int j;
-//	for(j = 0; j < MAX_THREAD; ++j){		
-//		thread_list[j].state = 0;
-//	}
-//	return;
-//}
+	int j;
+	for(j = 0; j < MAX_THREAD; ++j){		
+		t_list[j].state_a = 0;
+	}
+	return;
+}
 
 
-
-int create_t (int (*thread_run)(int*), void *arguments)  {
+/*int create_t (int (*thread_run)(int*), void *arguments)  {
 	int arg;
 	thread_tcb *thread;
 	thread = (thread_tcb*)malloc(sizeof(thread_tcb));
@@ -82,6 +83,27 @@ int create_t (int (*thread_run)(int*), void *arguments)  {
  	makecontext(&(thread->uc), (void (*) ()) thread_run, 2, arg);
 	enqueue(&ready_q, thread);
 	return 0 ; 
+}*/
+
+
+int create(void (*func)(void))  		
+{
+	if(num_active_thread == MAX_THREAD){
+		 return limitErr;
+	}
+	getcontext(&t_list[num_active_thread].context);
+	t_list[num_active_thread].context.uc_link = 0;
+	t_list[num_active_thread].stack = malloc( 1024*1024 );
+	t_list[num_active_thread].context.uc_stack.ss_sp = t_list[num_active_thread].stack;
+	t_list[num_active_thread].context.uc_stack.ss_size = 1024*1024;
+	t_list[num_active_thread].context.uc_stack.ss_flags = 0;
+	if (t_list[num_active_thread].stack == 0){
+		printf("Error: Could not allocate stack.\n");
+		return mallErr;
+	}
+	makecontext(&t_list[num_active_thread].context, (void (*)(void)) &begin, 1, func);
+	++num_active_thread;
+	return noErr;
 }
 
 
@@ -90,43 +112,49 @@ int thread_run (int* arg) {
   printf("Child is here");
 	
 }
-/*
-int spthread_join(){
+
+void begin(void (*func)(void)){    
+	t_list[cur_exe_thread].state_a = 1;
+	func();
+	t_list[cur_exe_thread].state_a = 0;
+	yield();
+}
+
+int join(){
 	int pending_thread = 0;
 	if(within_thread){
 		pending_thread = 1;
 	}
 	while(num_active_thread > pending_thread){	
-		spthread_yield();
+		yield();
 	}
 	return noErr;
 }
 
-
-void spthread_yield(){
+void yield(){
 	if(within_thread){
-		swapcontext(&thread_list[cur_exe_thread].context, &ctext);
+		swapcontext(&t_list[cur_exe_thread].context, &ctext);
 	}
 	else{
 		if(num_active_thread == 0)
 			return; 
 		cur_exe_thread = (cur_exe_thread + 1) % num_active_thread;
 		within_thread = 1;
-		swapcontext(&ctext, &thread_list[cur_exe_thread].context);	
+		swapcontext(&ctext, &t_list[cur_exe_thread].context);	
 		within_thread = 0;
-		if(thread_list[cur_exe_thread].state_a == 0){
-			free(thread_list[cur_exe_thread].stack);
+		if(t_list[cur_exe_thread].state_a == 0){
+			free(t_list[cur_exe_thread].stack);
 			--num_active_thread;
 			if(cur_exe_thread != num_active_thread){
-				thread_list[cur_exe_thread] = thread_list[num_active_thread];
+				t_list[cur_exe_thread] = t_list[num_active_thread];
 			}
-			thread_list[num_active_thread].state_a = 0;
+			t_list[num_active_thread].state_a = 0;
 		}
 	}
 	return;
-}
-*/
-void main(){
+} 
+
+/*void main(){
 	thread_tid *id_thread;
 	thread_tcb *tcb;
 	init_t(10);
@@ -139,6 +167,36 @@ void main(){
 
 
 }
+*/
+
+
+void lockinit(thread_l *lock){
+	lock->value = 0;
+}
+
+
+
+int lock_value(thread_l *lock){
+	if(lock->value == 0)
+		return 0;
+	else
+		return 1;
+}
+
+
+int lock(thread_l *lock){
+	while(lock_value(lock) != 0)
+		join();
+	lock->value = 1;
+	return noErr;
+}
+
+
+int unlock(thread_l *lock){
+	lock->value = 0;
+	return noErr;
+}
+
 
 
 

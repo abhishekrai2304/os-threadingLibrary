@@ -16,6 +16,7 @@
 #define mallErr	2
 
 #define MAX_THREAD 10
+
 //#define STACK_SIZE (1024*1024)
 
 
@@ -42,24 +43,52 @@ typedef struct queue {
 	int count;
 } queue; 
 
-//typedef struct mto2{
-//	ucontext_t context;
-//	int state_a;
-//	void *stack;
-//}spthread;
+typedef struct lock_struct{
+	int value;
+}thread_l;
+
+typedef struct mto1{
+	ucontext_t context;
+	int state_a;
+	void *stack;
+}threadm;
 
 
-int create_t(int (*thread_run)(int*), void *arguments);
 
-void init_q (queue *que); 
+
+//void init_t(queue *que); 
+void init();
+void begin(void (*func)(void));
+int create(void (*func)(void));
 
 int size_q(queue *que); 
 
 int enqueue (queue *q, thread_tcb *thread); 
-/*
 int join();
 void yield();
-*/
+void lockinit(thread_l *);
+int lock(thread_l *);
+int unlock(thread_l *);
+int value(thread_l *);
+
+
+
+//void init();
+//void begin(void (*func)(void));
+//int create(void (*func)(void));
+
+
+
+
+
+//#define STACK_SIZE (1024*1024)
+
+
+
+
+
+
+
 
 
 
