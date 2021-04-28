@@ -8,20 +8,24 @@ static int num_thread = 0;
 static thread_t th[5];
 spinLock l1;
 mutexLock ml1;
-
- inline int tgkill(int tgid, int tid, int sig) {
+inline int tgkill(int tgid, int tid, int sig) {
     return syscall(SYS_tgkill, tgid, tid, sig);
+}
+
+static inline int futex(int *uaddr, int futex_op, int val) {
+    return syscall(SYS_futex, uaddr, futex_op, val, NULL, NULL, 0);
 }
 void func(void *arg)
 {
-  thread_mutexLock(&ml1);
+  thread_spinLock(&l1);
+  // thread_mutexLock(&ml1);
   for (int i = 0; i < 5; i++)
   {
     printf("%d\n", i);
   
   }
-  //thread_spinUnlock(&l1);
-  thread_mutexUnlock(&ml1);
+  thread_spinUnlock(&l1);
+  // thread_spinUnlock(&ml1);
 
 }
 int thread_create(mthread *th, void *func, int argc, char **argv)
@@ -59,7 +63,15 @@ int thread_create(mthread *th, void *func, int argc, char **argv)
   
   *th = t.tid;
   num_thread--;
+  
   return done++;
+}
+void thread_exit(void *retval, mthread *th){
+  thread_t t;
+  t.tid = *th;
+  t.result = retval;
+  // sys_exit();
+  syscall(SYS_exit);
 }
 
 int thread_join(mthread *th){				//function join
@@ -144,6 +156,10 @@ int thread_mutexUnlock(mutexLock *lock){
   lock->val = 0;
   return 0;
 }
+
+
+
+
 int main(int argc, char **argv)
 {
   int v;
@@ -153,11 +169,15 @@ int main(int argc, char **argv)
   mthread t1, t2;
   // thread_init(&t1);
   // thread_init(&t2);
+  
   v = thread_create(&t1, &func, argc, argv);
-  thread_kill(t1,  0);
+  // thread_kill(t1,  0);
+  thread_kill(t1, SIGQUIT);
  v = thread_create(&t1, &func, argc, argv);
+ thread_exit(NULL, &t2);
+ printf("after exit");
   //thread_join(&t1);
-//  thread_kill(t1, SIGKILL);
+ 
   //printf("after kill call");
   //thread_join(&t2, NULL);
   //thread_exit(&ret1);

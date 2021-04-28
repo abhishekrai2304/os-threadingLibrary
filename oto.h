@@ -15,13 +15,15 @@
 #include<sys/utsname.h>
 #include<unistd.h>
 #include<errno.h>
+#include <linux/futex.h>
 
 
 typedef pid_t mthread;
+
 typedef struct thread_t{
     char *stack;
     mthread tid;
-
+    void *result;
 }thread_t;
 
 typedef struct spinLock{
@@ -44,3 +46,5 @@ int lockValue(spinLock *lock);
 int thread_mutexLock(mutexLock *lock);
 int thread_mutexUnlock(mutexLock *lock);
 int mutexLockValue(mutexLock *lock);
+
+void thread_exit(void *retval, mthread *t);
