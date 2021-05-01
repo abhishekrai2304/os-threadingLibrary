@@ -13,6 +13,20 @@ thread_tcb *current;
 queue ready_q; 
 
 
+mutexLock m_lock;
+void func(void *arg)
+{
+  thread_mutexLock(&m_lock);
+  for (int i = 0; i < 5; i++)
+  {
+    printf("%d\n", i);
+  
+  }
+  thread_mutexUnlock(&m_lock);
+
+}
+
+
 int size_q (queue *que) {
         return que->count;
 }
@@ -65,27 +79,6 @@ void init(){
 	return;
 }
 
-
-/*int create_t (int (*thread_run)(int*), void *arguments)  {
-	int arg;
-	thread_tcb *thread;
-	thread = (thread_tcb*)malloc(sizeof(thread_tcb));
-	
-	thread->thread_id = size_q(&ready_q);
-	if ( getcontext(&(thread->uc)) == -1 ) {
-		printf("Context can not be fetched due to error\n");
-		exit(EXIT_FAILURE);
-	}
-        
-	thread->uc.uc_link = &maincontext;
-	thread->uc.uc_stack.ss_sp = malloc(SIGSTKSZ);
-	thread->uc.uc_stack.ss_size = SIGSTKSZ;
- 	makecontext(&(thread->uc), (void (*) ()) thread_run, 2, arg);
-	enqueue(&ready_q, thread);
-	return 0 ; 
-}*/
-
-
 int create(void (*func)(void))  		
 {
 	if(num_active_thread == MAX_THREAD){
@@ -103,7 +96,7 @@ int create(void (*func)(void))
 	}
 	makecontext(&t_list[num_active_thread].context, (void (*)(void)) &begin, 1, func);
 	++num_active_thread;
-	return noErr;
+	return 0;
 }
 
 
@@ -128,7 +121,7 @@ int join(){
 	while(num_active_thread > pending_thread){	
 		yield();
 	}
-	return noErr;
+	return 0;
 }
 
 void yield(){
@@ -154,27 +147,22 @@ void yield(){
 	return;
 } 
 
-/*void main(){
-	thread_tid *id_thread;
-	thread_tcb *tcb;
-	init_t(10);
-	id_thread = (thread_tid*)malloc(sizeof(thread_tid));
-	tcb = (thread_tcb*)malloc(sizeof(thread_tcb));
-	id_thread->thread_id = create_t(thread_run, tcb->arg);
-	printf("Thread identification of child is: %d" ,id_thread->thread_id);
-	printf("\n");
-	printf("Thread identification of parent is: %d", getppid());
 
 
+
+void exit_thread(void *retval, mthread *thr){
+	thread_thr t;
+	t.tid = *thr;
+	t.result = retval;
+	syscall(SYS_exit);
 }
-*/
-
+//		exit(0);
+//	}
+//}
 
 void lockinit(thread_l *lock){
 	lock->value = 0;
 }
-
-
 
 int lock_value(thread_l *lock){
 	if(lock->value == 0)
@@ -184,19 +172,46 @@ int lock_value(thread_l *lock){
 }
 
 
-int lock(thread_l *lock){
+int spin_lock(thread_l *lock){
 	while(lock_value(lock) != 0)
 		join();
 	lock->value = 1;
-	return noErr;
+	return 0;
 }
 
 
-int unlock(thread_l *lock){
+int spin_unlock(thread_l *lock){
 	lock->value = 0;
-	return noErr;
+	return 0;
 }
 
+void lockinit_m(mutexLock *lock){
+	lock -> value = er;
+}
+
+
+int mutex_lock_value(mutexLock *lock){
+	if(lock->value == 0)
+		return 0;
+	else
+		return 1;
+}
+
+
+int thread_mutexLock(mutexLock *lock){
+	while(mutex_lock_value(lock) != 0)
+		
+		join();
+		sleep(2);
+	lock->value = 1;
+	return 0;
+}
+
+
+int thread_mutexUnlock(mutexLock *lock){
+	lock->value = 0;
+	return 0;
+}
 
 
 
