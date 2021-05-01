@@ -1,34 +1,29 @@
 #include "oto.h"
 
 static pid_t parent_pid;
+
 int done = 0;
 pid_t parent;
 int val1 = 0;
+
 static int num_thread = 0;
 static thread_t th[5];
 spinLock l1;
 mutexLock ml1;
-inline int tgkill(int tgid, int tid, int sig) {
-    return syscall(SYS_tgkill, tgid, tid, sig);
-}
+
+mthread t1, t2, t3;
+
+// inline int tgkill(int tgid, int tid, int sig) {
+//     return syscall(SYS_tgkill, tgid, tid, sig);
+// }
 
 static inline int futex(int *uaddr, int futex_op, int val) {
     return syscall(SYS_futex, uaddr, futex_op, val, NULL, NULL, 0);
 }
-void func(void *arg)
-{
-  thread_spinLock(&l1);
-  // thread_mutexLock(&ml1);
-  for (int i = 0; i < 5; i++)
-  {
-    printf("%d\n", i);
-  
-  }
-  thread_spinUnlock(&l1);
-  // thread_spinUnlock(&ml1);
 
-}
-int thread_create(mthread *th, void *func, int argc, char **argv)
+
+
+int thread_create(mthread *th, void *func)
 {
   thread_t t;
   const int STACK_SIZE = 65536;
@@ -41,31 +36,31 @@ int thread_create(mthread *th, void *func, int argc, char **argv)
     return error_malloc;
   }
 
-  unsigned long flags = 0;
+  unsigned long flags = 0, thread;
   flags |= CLONE_VM;
+  thread |= CLONE_THREAD;
+
   char buf[100];
   strcpy(buf, "hello from parent");
   
-  if (t.tid = clone(func, t.stack + STACK_SIZE, flags | SIGCHLD, buf) == -1)
+if (t.tid = clone(func, t.stack + STACK_SIZE,  SIGCHLD | CLONE_FS | CLONE_FILES |\
+ CLONE_SIGHAND | CLONE_VM, buf) == -1)
   {
-    // perror("clone");
+    perror("clone");
     // exit(1);
+
     return error_clone;
   }
 
-  // int status;
-  // if (wait(&status) == -1){
-  //   perror("wait");
-  //   exit(1);
-  // }
-
-  // printf("Child exited with status %d. buf = \"%s\"\n", status, buf);
+ 
   
   *th = t.tid;
   num_thread--;
   
   return done++;
 }
+
+
 void thread_exit(void *retval, mthread *th){
   thread_t t;
   t.tid = *th;
@@ -73,6 +68,8 @@ void thread_exit(void *retval, mthread *th){
   // sys_exit();
   syscall(SYS_exit);
 }
+
+
 
 int thread_join(mthread *th){				//function join
 	thread_t *t;
@@ -108,18 +105,25 @@ int thread_join(mthread *th){				//function join
 	return 0;
 }
 
+
+
 int thread_kill(mthread t,  int sig){
   if(sig == 0){
-        //printf("kill success");
+        
         return 0;
   }
   pid_t tgid = getpid();
-  int err = tgkill(tgid, t, sig);
-  if(err == -1){
-    return errno;
-  }
+  // int err = tgkill(tgid, t, sig);
+  // if(err == -1){
+  //   return errno;
+  // }
+ // signal(SIGINT, handler);
+  kill(tgid, SIGINT);
   return 0;
 }
+
+
+
 int lockValue(spinLock *lock){
   if(lock->val == 0)
     return 0;
@@ -157,30 +161,3 @@ int thread_mutexUnlock(mutexLock *lock){
   return 0;
 }
 
-
-
-
-int main(int argc, char **argv)
-{
-  int v;
-  int *ptr[2];
-  int ret1 = 69;
-  parent = getpid();
-  mthread t1, t2;
-  // thread_init(&t1);
-  // thread_init(&t2);
-  
-  v = thread_create(&t1, &func, argc, argv);
-  // thread_kill(t1,  0);
-  thread_kill(t1, SIGQUIT);
- v = thread_create(&t1, &func, argc, argv);
- thread_exit(NULL, &t2);
- printf("after exit");
-  //thread_join(&t1);
- 
-  //printf("after kill call");
-  //thread_join(&t2, NULL);
-  //thread_exit(&ret1);
-  //printf("%d\n", val1);
-  return 0;
-}

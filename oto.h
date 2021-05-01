@@ -36,8 +36,7 @@ typedef struct mutexLock{
 
 
 void func(void* arg);
-int thread_create(mthread *t, void *func, int argc, char** argv);
-// int thread_join(thread_t *t, void **retval);
+int thread_create(mthread *t, void *func);
 int thread_join(mthread *t);
 int thread_kill(mthread t,  int sig);
 int thread_spinLock(spinLock *lock);
