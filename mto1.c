@@ -17,9 +17,9 @@ mutexLock m_lock;
 void func(void *arg)
 {
   thread_mutexLock(&m_lock);
-  for (int i = 0; i < 5; i++)
+  for (int k = 0; k < 5; k++)
   {
-    printf("%d\n", i);
+    printf("%d\n", k);
   
   }
   thread_mutexUnlock(&m_lock);
