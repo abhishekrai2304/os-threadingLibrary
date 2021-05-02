@@ -147,18 +147,13 @@ void yield(){
 	return;
 } 
 
-
-
-
 void exit_thread(void *retval, mthread *thr){
 	thread_thr t;
 	t.tid = *thr;
 	t.result = retval;
 	syscall(SYS_exit);
 }
-//		exit(0);
-//	}
-//}
+
 
 void lockinit(thread_l *lock){
 	lock->value = 0;
@@ -213,7 +208,14 @@ int thread_mutexUnlock(mutexLock *lock){
 	return 0;
 }
 
-
+int thread_kill(mthread t, int sig){
+	if(sig == 0){
+		return 0;
+	}
+	pid_t tgid = getpid();
+	kill(tgid, SIGINT);
+	return 0;
+}
 
 
 

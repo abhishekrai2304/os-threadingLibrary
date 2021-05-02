@@ -22,11 +22,13 @@
 //#define STACK_SIZE (1024*1024)
 typedef pid_t mthread;
 
+
 typedef struct thread_thr{
 	void *result;
 	mthread tid;
 	char *stack;
 }thread_thr;
+
 
 
 typedef struct{
@@ -66,6 +68,7 @@ typedef struct mto1{
 }threadm;
 
 
+
 typedef struct thread_tc{
 	pid_t thread_id;
 	struct thread_tc *prev, *next;
@@ -94,7 +97,8 @@ int mutexLockValue(mutexLock *lock);
 void lockinit_m(mutexLock *lock);
 int thread_mutexLock(mutexLock *lock);
 int thread_mutexUnlock(mutexLock *lock);
-void exit_thread();
+int thread_kill(mthread t,  int sig);
+void thread_exit(void *retval, mthread *t);
 
 
 

@@ -2,19 +2,23 @@
 #include <stdio.h>
 #include <unistd.h>
 
-thread_l l2;
+thread_l l1;
 mutexLock m1;
+mthread t1, t2, t3;
 
 void number_series(){
 	long int k;
-	spin_lock(&l2);
+	spin_lock(&l1);
 	for(k = 0; k < 5; k++){
 		printf("Number sequence is : %lu \n", k);
 		printf("\n");
 		yield();
 	}
-	spin_unlock(&l2);
-	return;
+	
+	spin_unlock(&l1);
+	thread_kill(t3, SIGINT);
+	printf("Executed");
+	//return;
 }
 
 void fibo(){
@@ -42,13 +46,14 @@ void cube_of_number(){
 
 int main(){
 	init();
-	lockinit(&l2);
+	lockinit(&l1);
 	create(&number_series);
-	exit_thread();
 	create(&cube_of_number);
 	create(&number_series);
 	create(&fibo);
 	create(&cube_of_number);
 	join();
+	exit_thread(NULL, &t3);
+        printf("after exit \n");
 	return 0;
 }

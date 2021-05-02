@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 mutexLock m1;
+mthread t1, t2, t3;
 
 void number_series(){
 	long int k;
@@ -56,13 +57,13 @@ int main(){
 	lockinit_m(&m1);
 	create(&number_series);
 	create(&cube_of_number);	
-	exit_thread();
+	exit_thread(NULL, &t3);
 	create(&number_series);
 	create(&square_of_number);
-	//exit_thread();
+	//exit_thread(NULL, &t3);
 	create(&cube_of_number);
 	create(&fibonaci_number);
 	join();
-	//exit_thread();
+
 	return 0;
 }
